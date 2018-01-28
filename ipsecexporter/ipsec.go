@@ -1,4 +1,4 @@
-package ipsec
+package ipsecexporter
 
 import (
 	"io/ioutil"
