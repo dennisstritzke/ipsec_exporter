@@ -1,12 +1,13 @@
 package ipsecexporter
 
 import (
-	"io/ioutil"
 	"strings"
 	"regexp"
 	"os/exec"
 	"bytes"
 	"strconv"
+	"io/ioutil"
+	"github.com/prometheus/common/log"
 )
 
 type IpSecStatus struct {
@@ -14,10 +15,10 @@ type IpSecStatus struct {
 }
 
 const (
-	TUNNEL_INSTALLED       int = 0
-	CONNECTION_ESTABLISHED int = 1
-	DOWN                   int = 2
-	UNKNOWN                int = 3
+	tunnelInstalled       int = 0
+	connectionEstablished int = 1
+	down                  int = 2
+	unknown               int = 3
 )
 
 func CreateIpSecStatus(fileName string) (IpSecStatus, error) {
@@ -27,7 +28,7 @@ func CreateIpSecStatus(fileName string) (IpSecStatus, error) {
 	content, err := loadConfig(fileName)
 	connectionNames := getConfiguredIpSecConnection(extractLines(content))
 	for _, connection := range connectionNames {
-		ipsec.status[connection] = UNKNOWN
+		ipsec.status[connection] = unknown
 	}
 
 	return ipsec, err
@@ -35,8 +36,14 @@ func CreateIpSecStatus(fileName string) (IpSecStatus, error) {
 
 func (s IpSecStatus) QueryStatus() IpSecStatus {
 	for connection := range s.status {
-		out, _ := exec.Command("ipsec", "status", connection).Output()
-		s.status[connection] = getStatus(out)
+		cmd := exec.Command("ipsec", "status", connection)
+		if out, err := cmd.Output(); err != nil {
+			log.Warnf("Were not able to execute 'ipsec status %s'. %v", connection, err)
+			continue
+		} else {
+			status := getStatus(out)
+			s.status[connection] = status
+		}
 	}
 
 	return s
@@ -62,15 +69,15 @@ func getStatus(statusLine []byte) int {
 
 	if connectionEstablishedRegex.Match(statusLine) {
 		if tunnelEstablishedRegex.Match(statusLine) {
-			return TUNNEL_INSTALLED
+			return tunnelInstalled
 		} else {
-			return CONNECTION_ESTABLISHED
+			return connectionEstablished
 		}
 	} else if noMatchRegex.Match(statusLine) {
-		return DOWN
+		return down
 	}
 
-	return UNKNOWN
+	return unknown
 }
 
 func loadConfig(fileName string) (string, error) {
@@ -78,7 +85,8 @@ func loadConfig(fileName string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return string(buf), nil
+	s := string(buf)
+	return s, nil
 }
 
 func getConfiguredIpSecConnection(ipsecConfigLines []string) []string {
