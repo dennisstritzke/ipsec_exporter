@@ -95,7 +95,7 @@ func TestExtractLines(t *testing.T) {
 
 func checkInput(t *testing.T, sliced []string, index int, expected string) {
 	if sliced[index] != expected {
-		t.Errorf("Expected inputSliced[%s] to be %s but was %s", index, expected, sliced[index])
+		t.Errorf("Expected inputSliced[%d] to be %s but was %s", index, expected, sliced[index])
 	}
 }
 

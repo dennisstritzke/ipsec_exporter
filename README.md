@@ -1,6 +1,13 @@
 # IPsec Exporter [![CircleCI](https://circleci.com/gh/dennisstritzke/ipsec_exporter/tree/master.svg?style=svg)](https://circleci.com/gh/dennisstritzke/ipsec_exporter/tree/master)
 Prometheus exporter for ipsec metrics, written in Go.
 
+## Quick Start
+```
+glide install
+go test -v $(glide novendor)
+go install github.com/dennisstritzke/ipsec_exporter
+```
+
 ## Functionality
 The IPsec exporter is determining the state of the configured IPsec tunnels via the following procedure.
 1. Starting up the `ipsec.conf` is read. All tunnels configured via the `conn` keyword are observed.
@@ -16,4 +23,4 @@ connection. The output is parsed.
 | ipsec_status | 0 | The connection is established and tunnel is installed. The tunnel is up and running. |
 | ipsec_status | 1 | The connection is established, but the tunnel is not up. |
 | ipsec_status | 2 | The tunnel is down. |
-| ipsec_status | 3 | The tunnel is in an unknown state. | 
+| ipsec_status | 3 | The tunnel is in an unknown state. |

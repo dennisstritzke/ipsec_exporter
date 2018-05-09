@@ -10,5 +10,6 @@ jobs:
     working_directory: /go/src/github.com/dennisstritzke/ipsec_exporter
     steps:
       - checkout
-      - run: go get -v -t -d ./...
-      - run: go test -v ./...
+      - run: go get github.com/Masterminds/glide
+      - run: glide install
+      - run: go test -v $(glide novendor)
