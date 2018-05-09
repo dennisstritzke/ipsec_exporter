@@ -93,7 +93,7 @@ func getConfiguredIpSecConnection(ipsecConfigLines []string) []string {
 	connectionNames := []string{}
 
 	for _, line := range ipsecConfigLines {
-		re := regexp.MustCompile(`conn\s([a-zA-Z_-]+)`)
+		re := regexp.MustCompile(`conn\s([a-zA-Z0-9_-]+)`)
 		match := re.FindStringSubmatch(line)
 		if len(match) >= 2 {
 			connectionNames = append(connectionNames, match[1])
