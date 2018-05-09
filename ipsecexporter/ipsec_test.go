@@ -18,6 +18,20 @@ func TestGetConfiguredIpSecConnections_simpleLine(t *testing.T) {
 	}
 }
 
+func TestGetConfiguredIpSecConnections_connectionIncludingNumber(t *testing.T) {
+	input := []string{"conn fancy_345"}
+	connections := getConfiguredIpSecConnection(input)
+
+	if len(connections) != 1 {
+		t.Errorf("Expected to have found 1 connection, but has found %d", len(connections))
+		return
+	}
+
+	if connections[0] != "fancy_345" {
+		t.Errorf("Should have found connection 'fancy_345', but found %s", connections[0])
+	}
+}
+
 func TestGetConfiguredIpSecConnections_simpleLineAndComment(t *testing.T) {
 	input := []string{"conn fancy_dc # very wise comment"}
 	connections := getConfiguredIpSecConnection(input)
