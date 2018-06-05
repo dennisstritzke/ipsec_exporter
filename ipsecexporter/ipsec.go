@@ -10,6 +10,10 @@ import (
 	"github.com/prometheus/common/log"
 )
 
+type IpSecConfiguration struct {
+	tunnel []string
+}
+
 type IpSecStatus struct {
 	status map[string]int
 }
@@ -21,21 +25,21 @@ const (
 	unknown               int = 3
 )
 
-func CreateIpSecStatus(fileName string) (IpSecStatus, error) {
-	ipsec := IpSecStatus{}
-	ipsec.status = map[string]int{}
-
+func FetchIpSecConfiguration(fileName string) (IpSecConfiguration, error) {
 	content, err := loadConfig(fileName)
 	connectionNames := getConfiguredIpSecConnection(extractLines(content))
-	for _, connection := range connectionNames {
-		ipsec.status[connection] = unknown
-	}
 
-	return ipsec, err
+	return IpSecConfiguration{
+		tunnel: connectionNames,
+	}, err
 }
 
-func (s IpSecStatus) QueryStatus() IpSecStatus {
-	for connection := range s.status {
+func (c IpSecConfiguration) QueryStatus() IpSecStatus {
+	s := IpSecStatus{
+		status: map[string]int{},
+	}
+
+	for _, connection := range c.tunnel {
 		cmd := exec.Command("ipsec", "status", connection)
 		if out, err := cmd.Output(); err != nil {
 			log.Warnf("Were not able to execute 'ipsec status %s'. %v", connection, err)
