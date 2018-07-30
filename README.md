@@ -24,3 +24,4 @@ connection. The output is parsed.
 | ipsec_status | 1 | The connection is established, but the tunnel is not up. |
 | ipsec_status | 2 | The tunnel is down. |
 | ipsec_status | 3 | The tunnel is in an unknown state. |
+| ipsec_status | 4 | The tunnel is ignored. |

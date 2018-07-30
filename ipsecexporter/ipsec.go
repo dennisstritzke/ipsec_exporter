@@ -8,10 +8,15 @@ import (
 	"strconv"
 	"io/ioutil"
 	"github.com/prometheus/common/log"
-)
+	)
+
+type IpSecConnection struct {
+	name    string
+	ignored bool
+}
 
 type IpSecConfiguration struct {
-	tunnel []string
+	tunnel []IpSecConnection
 }
 
 type IpSecStatus struct {
@@ -23,6 +28,7 @@ const (
 	connectionEstablished int = 1
 	down                  int = 2
 	unknown               int = 3
+	ignored               int = 4
 )
 
 func FetchIpSecConfiguration(fileName string) (IpSecConfiguration, error) {
@@ -40,13 +46,18 @@ func (c IpSecConfiguration) QueryStatus() IpSecStatus {
 	}
 
 	for _, connection := range c.tunnel {
-		cmd := exec.Command("ipsec", "status", connection)
+		if connection.ignored {
+			s.status[connection.name] = ignored
+			continue
+		}
+
+		cmd := exec.Command("ipsec", "status", connection.name)
 		if out, err := cmd.Output(); err != nil {
 			log.Warnf("Were not able to execute 'ipsec status %s'. %v", connection, err)
-			continue
+			s.status[connection.name] = unknown
 		} else {
 			status := getStatus(out)
-			s.status[connection] = status
+			s.status[connection.name] = status
 		}
 	}
 
@@ -93,18 +104,29 @@ func loadConfig(fileName string) (string, error) {
 	return s, nil
 }
 
-func getConfiguredIpSecConnection(ipsecConfigLines []string) []string {
-	connectionNames := []string{}
+func getConfiguredIpSecConnection(ipsecConfigLines []string) []IpSecConnection {
+	connections := []IpSecConnection{}
 
 	for _, line := range ipsecConfigLines {
+		// Match connection definition lines
 		re := regexp.MustCompile(`conn\s([a-zA-Z0-9_-]+)`)
 		match := re.FindStringSubmatch(line)
 		if len(match) >= 2 {
-			connectionNames = append(connectionNames, match[1])
+			connections = append(connections, IpSecConnection{name: match[1], ignored: false})
+		}
+
+		// Match auto=ignore lines
+		reAutoIgnore := regexp.MustCompile(`auto=ignore`)
+		matchAutoIgnore := reAutoIgnore.FindStringSubmatch(line)
+		if len(matchAutoIgnore) >= 1 {
+			connectionIndex := len(connections) - 1
+			if len(connections) > connectionIndex {
+				connections[connectionIndex].ignored = true
+			}
 		}
 	}
 
-	return connectionNames
+	return connections
 }
 
 func extractLines(ipsecConfig string) []string {

@@ -13,8 +13,8 @@ func TestGetConfiguredIpSecConnections_simpleLine(t *testing.T) {
 		return
 	}
 
-	if connections[0] != "fancy_dc" {
-		t.Errorf("Should have found connection 'fancy_dc', but found %s", connections[0])
+	if connections[0].name != "fancy_dc" {
+		t.Errorf("Should have found connection 'fancy_dc', but found %s", connections[0].name)
 	}
 }
 
@@ -27,8 +27,8 @@ func TestGetConfiguredIpSecConnections_connectionIncludingNumber(t *testing.T) {
 		return
 	}
 
-	if connections[0] != "fancy_345" {
-		t.Errorf("Should have found connection 'fancy_345', but found %s", connections[0])
+	if connections[0].name != "fancy_345" {
+		t.Errorf("Should have found connection 'fancy_345', but found %s", connections[0].name)
 	}
 }
 
@@ -41,8 +41,8 @@ func TestGetConfiguredIpSecConnections_simpleLineAndComment(t *testing.T) {
 		return
 	}
 
-	if connections[0] != "fancy_dc" {
-		t.Errorf("Should have found connection 'fancy_dc', but found %s", connections[0])
+	if connections[0].name != "fancy_dc" {
+		t.Errorf("Should have found connection 'fancy_dc', but found %s", connections[0].name)
 	}
 }
 
@@ -55,8 +55,8 @@ func TestGetConfiguredIpSecConnections_withDefault(t *testing.T) {
 		return
 	}
 
-	if connections[0] != "fancy_dc" {
-		t.Errorf("Should have found connection 'fancy_dc', but found %s", connections[0])
+	if connections[0].name != "fancy_dc" {
+		t.Errorf("Should have found connection 'fancy_dc', but found %s", connections[0].name)
 	}
 }
 
@@ -69,12 +69,48 @@ func TestGetConfiguredIpSecConnections_withNewLines(t *testing.T) {
 		return
 	}
 
-	if connections[0] != "fancy_dc" {
-		t.Errorf("Should have found connection 'fancy_dc', but found %s", connections[0])
+	if connections[0].name != "fancy_dc" {
+		t.Errorf("Should have found connection 'fancy_dc', but found %s", connections[0].name)
 	}
 
-	if connections[1] != "second_dc" {
-		t.Errorf("Should have found connection 'second_dc', but found %s", connections[1])
+	if connections[1].name != "second_dc" {
+		t.Errorf("Should have found connection 'second_dc', but found %s", connections[1].name)
+	}
+}
+
+func TestGetConfiguredIpSecConnections_autoIgnore(t *testing.T) {
+	input := []string{"conn fancy_dc", "  auto=ignore"}
+	connections := getConfiguredIpSecConnection(input)
+
+	if len(connections) != 1 {
+		t.Errorf("Expected to have found 1 connection, but has found %d", len(connections))
+		return
+	}
+
+	if connections[0].name != "fancy_dc" {
+		t.Errorf("Should have found connection 'fancy_dc', but found %s", connections[0].name)
+	}
+
+	if !connections[0].ignored {
+		t.Errorf("Expected connection to be ignored")
+	}
+}
+
+func TestGetConfiguredIpSecConnections_autoIgnoreMultipleTunnels(t *testing.T) {
+	input := []string{"conn fancy_dc", "  esp=aes256-sha256-modp2048!", "", "  left=10.0.0.7", "", "conn second_dc", "  auto=ignore"}
+	connections := getConfiguredIpSecConnection(input)
+
+	if len(connections) != 2 {
+		t.Errorf("Expected to have found 2 connection, but has found %d", len(connections))
+		return
+	}
+
+	if connections[0].ignored {
+		t.Errorf("Expected connection '%s' not to be ignored", connections[0].name)
+	}
+
+	if !connections[1].ignored {
+		t.Errorf("Expected connection '%s' to be ignored", connections[1].name)
 	}
 }
 
