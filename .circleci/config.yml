@@ -27,7 +27,7 @@ jobs:
             - golang-ipsec_exporter-vendor
       - run:
           name: Build Golang binary
-          command: go build -a -installsuffix cgo -o binaries/ipsec_exporter github.com/dennisstritzke/ipsec_exporter
+          command: go build -a -installsuffix cgo -o binaries/ipsec_exporter -ldflags "-X github.com/dennisstritzke/ipsec_exporter/cmd.Version=${CIRCLE_TAG}" github.com/dennisstritzke/ipsec_exporter
           environment:
             GOOS: linux
             GOARCH: amd64

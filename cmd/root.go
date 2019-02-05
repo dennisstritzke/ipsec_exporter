@@ -12,11 +12,13 @@ const (
 	flagWebListenAddress = "web.listen-address"
 )
 
+var Version string
 var RootCmd = &cobra.Command{
 	Use:   "ipsec_exporter",
 	Short: "Prometheus exporter for ipsec status.",
 	Long:  "",
 	Run:   defaultCommand,
+	Version: Version,
 }
 
 func init() {

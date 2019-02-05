@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 - This Changelog.
 - Automated release process on Git Tag push.
+- `--version` command line option.
 
 ### Changed
 - The default listening port is now `9536` and registered as a [Prometheus Exporter Default port](https://github.com/prometheus/prometheus/wiki/Default-port-allocations).
