@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 - The default listening port is now `9536` and registered as a [Prometheus Exporter Default port](https://github.com/prometheus/prometheus/wiki/Default-port-allocations).
   If you want to maintain the previous behaviour, launch the `ipsec_exporter` with the `--web.listen-address 9101`
-  command line flag. 
+  command line flag.
 
 ## [0.2](https://github.com/dennisstritzke/ipsec_exporter/releases/tag/v0.2) - 2018-07-30
 ### Added

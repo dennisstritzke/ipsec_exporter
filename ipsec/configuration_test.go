@@ -1,12 +1,16 @@
-package ipsecexporter
+package ipsec
 
 import (
 	"testing"
 )
 
+func dummyIpSecConfigLoader() *ipSecConfigurationLoader {
+	return newIpSecConfigLoader("dummy.conf")
+}
+
 func TestGetConfiguredIpSecConnections_simpleLine(t *testing.T) {
-	input := []string{"conn fancy_dc"}
-	connections := getConfiguredIpSecConnection(input)
+	input := "conn fancy_dc"
+	connections := dummyIpSecConfigLoader().getConfiguredIpSecConnection(input)
 
 	if len(connections) != 1 {
 		t.Errorf("Expected to have found 1 connection, but has found %d", len(connections))
@@ -19,8 +23,8 @@ func TestGetConfiguredIpSecConnections_simpleLine(t *testing.T) {
 }
 
 func TestGetConfiguredIpSecConnections_connectionIncludingNumber(t *testing.T) {
-	input := []string{"conn fancy_345"}
-	connections := getConfiguredIpSecConnection(input)
+	input := "conn fancy_345"
+	connections := dummyIpSecConfigLoader().getConfiguredIpSecConnection(input)
 
 	if len(connections) != 1 {
 		t.Errorf("Expected to have found 1 connection, but has found %d", len(connections))
@@ -33,8 +37,8 @@ func TestGetConfiguredIpSecConnections_connectionIncludingNumber(t *testing.T) {
 }
 
 func TestGetConfiguredIpSecConnections_simpleLineAndComment(t *testing.T) {
-	input := []string{"conn fancy_dc # very wise comment"}
-	connections := getConfiguredIpSecConnection(input)
+	input := "conn fancy_dc # very wise comment"
+	connections := dummyIpSecConfigLoader().getConfiguredIpSecConnection(input)
 
 	if len(connections) != 1 {
 		t.Errorf("Expected to have found 1 connection, but has found %d", len(connections))
@@ -47,8 +51,8 @@ func TestGetConfiguredIpSecConnections_simpleLineAndComment(t *testing.T) {
 }
 
 func TestGetConfiguredIpSecConnections_withDefault(t *testing.T) {
-	input := []string{"conn %default", "  esp=aes256-sha1", "", "conn fancy_dc"}
-	connections := getConfiguredIpSecConnection(input)
+	input := "conn %default\n  esp=aes256-sha1\n\nconn fancy_dc"
+	connections := dummyIpSecConfigLoader().getConfiguredIpSecConnection(input)
 
 	if len(connections) != 1 {
 		t.Errorf("Expected to have found 1 connection, but has found %d", len(connections))
@@ -61,8 +65,8 @@ func TestGetConfiguredIpSecConnections_withDefault(t *testing.T) {
 }
 
 func TestGetConfiguredIpSecConnections_withNewLines(t *testing.T) {
-	input := []string{"conn fancy_dc", "  esp=aes256-sha256-modp2048!", "", "  left=10.0.0.7", "", "conn second_dc"}
-	connections := getConfiguredIpSecConnection(input)
+	input := "conn fancy_dc\n  esp=aes256-sha256-modp2048!\n\n  left=10.0.0.7\n\nconn second_dc"
+	connections := dummyIpSecConfigLoader().getConfiguredIpSecConnection(input)
 
 	if len(connections) != 2 {
 		t.Errorf("Expected to have found 2 connection, but has found %d", len(connections))
@@ -79,8 +83,8 @@ func TestGetConfiguredIpSecConnections_withNewLines(t *testing.T) {
 }
 
 func TestGetConfiguredIpSecConnections_autoIgnore(t *testing.T) {
-	input := []string{"conn fancy_dc", "  auto=ignore"}
-	connections := getConfiguredIpSecConnection(input)
+	input := "conn fancy_dc\n  auto=ignore"
+	connections := dummyIpSecConfigLoader().getConfiguredIpSecConnection(input)
 
 	if len(connections) != 1 {
 		t.Errorf("Expected to have found 1 connection, but has found %d", len(connections))
@@ -97,8 +101,8 @@ func TestGetConfiguredIpSecConnections_autoIgnore(t *testing.T) {
 }
 
 func TestGetConfiguredIpSecConnections_autoIgnoreMultipleTunnels(t *testing.T) {
-	input := []string{"conn fancy_dc", "  esp=aes256-sha256-modp2048!", "", "  left=10.0.0.7", "", "conn second_dc", "  auto=ignore"}
-	connections := getConfiguredIpSecConnection(input)
+	input := "conn fancy_dc\n  esp=aes256-sha256-modp2048!\n\n  left=10.0.0.7\n\nconn second_dc\n  auto=ignore"
+	connections := dummyIpSecConfigLoader().getConfiguredIpSecConnection(input)
 
 	if len(connections) != 2 {
 		t.Errorf("Expected to have found 2 connection, but has found %d", len(connections))
@@ -116,7 +120,7 @@ func TestGetConfiguredIpSecConnections_autoIgnoreMultipleTunnels(t *testing.T) {
 
 func TestExtractLines(t *testing.T) {
 	input := "First\nSecond\n\nThird"
-	inputSliced := extractLines(input)
+	inputSliced := dummyIpSecConfigLoader().extractLines(input)
 
 	if len(inputSliced) != 4 {
 		t.Errorf("Expected output to have 4 items, but has %d", len(inputSliced))
@@ -132,32 +136,5 @@ func TestExtractLines(t *testing.T) {
 func checkInput(t *testing.T, sliced []string, index int, expected string) {
 	if sliced[index] != expected {
 		t.Errorf("Expected inputSliced[%d] to be %s but was %s", index, expected, sliced[index])
-	}
-}
-
-func TestStatus_noMatch(t *testing.T) {
-	input := "Security Associations (1 up, 0 connecting):\n	 no match"
-	status := getStatus([]byte(input))
-
-	if status != down {
-		t.Errorf("Expected tunnel to be 'down', but was state %d", status)
-	}
-}
-
-func TestStatus_connectionUpTunnelMissing(t *testing.T) {
-	input := "Security Associations (1 up, 0 connecting):\n  fancy[3]: ESTABLISHED 16 hours ago, 10.0.0.7[213.123.123.9]...212.93.93.93[212.93.93.93]\n	 fancy{134}:  REKEYED, TUNNEL, reqid 2, ESP in UDP SPIs: cc2e965d_i 6d01c0d7_o\n 	fancy{134}:   10.2.0.112/29 === 10.3.0.0/24"
-	status := getStatus([]byte(input))
-
-	if status != connectionEstablished {
-		t.Errorf("Expected tunnel to be 'connectionEstablished', but was state %d", status)
-	}
-}
-
-func TestStatus_operational(t *testing.T) {
-	input := "Security Associations (1 up, 0 connecting):\n  fancy[3]: ESTABLISHED 16 hours ago, 10.0.0.7[213.123.123.9]...212.93.93.93[212.93.93.93]\n	 fancy{134}:  INSTALLED, TUNNEL, reqid 2, ESP in UDP SPIs: cc2e965d_i 6d01c0d7_o\n 	fancy{134}:   10.2.0.112/29 === 10.3.0.0/24"
-	status := getStatus([]byte(input))
-
-	if status != tunnelInstalled {
-		t.Errorf("Expected tunnel to be 'tunnelInstalled', but was state %d", status)
 	}
 }
