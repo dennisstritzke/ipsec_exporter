@@ -28,7 +28,15 @@ func Serve() {
 	collector := ipsec.NewCollector(ipSecConfiguration)
 	prometheus.MustRegister(collector)
 
-	http.HandleFunc("/", redirectToMetrics)
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`<html>
+             <head><title>IPsec Exporter</title></head>
+             <body>
+             <h1>IPsec Exporter</h1>
+             <p><a href='/metrics'>Metrics</a></p>
+             </body>
+             </html>`))
+	})
 	http.Handle("/metrics", promhttp.Handler())
 
 	log.Infoln("Listening on", WebListenAddress)
@@ -36,8 +44,4 @@ func Serve() {
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func redirectToMetrics(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/metrics", http.StatusMovedPermanently)
 }
