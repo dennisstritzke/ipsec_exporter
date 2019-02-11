@@ -2,6 +2,8 @@ package ipsec
 
 import (
 	"io/ioutil"
+	"log"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -35,16 +37,38 @@ func newIpSecConfigLoader(fileName string) *ipSecConfigurationLoader {
 }
 
 func (l *ipSecConfigurationLoader) Load() (*Configuration, error) {
-	content, err := l.loadConfig()
-	connectionNames := l.getConfiguredIpSecConnection(content)
+	var connections []connection
+	var err error
+
+	configFiles := []string{l.FileName}
+
+	for i := 0; i < len(configFiles); i++ {
+		content, err := l.loadConfig(configFiles[i])
+		if err != nil {
+			break
+		}
+
+		newConnections, includedFiles := l.getConfiguredIpSecConnection(content)
+		connections = append(connections, newConnections...)
+
+		for _, pattern := range includedFiles {
+			matches, patternErr := filepath.Glob(pattern)
+			if patternErr != nil {
+				log.Printf("Unable to read include pattern '%s' in file '%s'", pattern, configFiles[i])
+				continue
+			}
+			configFiles = append(configFiles, matches...)
+		}
+	}
 
 	return &Configuration{
-		tunnel: connectionNames,
+		tunnel: connections,
 	}, err
 }
 
-func (l *ipSecConfigurationLoader) getConfiguredIpSecConnection(ipSecConfigContent string) []connection {
+func (l *ipSecConfigurationLoader) getConfiguredIpSecConnection(ipSecConfigContent string) ([]connection, []string) {
 	var connections []connection
+	var includeFiles []string
 
 	ipSecConfigLines := l.extractLines(ipSecConfigContent)
 	for _, line := range ipSecConfigLines {
@@ -64,13 +88,19 @@ func (l *ipSecConfigurationLoader) getConfiguredIpSecConnection(ipSecConfigConte
 				connections[connectionIndex].ignored = true
 			}
 		}
+
+		reIgnore := regexp.MustCompile(`include\s(.*)`)
+		matchIgnore := reIgnore.FindStringSubmatch(line)
+		if len(matchIgnore) >= 2 {
+			includeFiles = append(includeFiles, matchIgnore[1])
+		}
 	}
 
-	return connections
+	return connections, includeFiles
 }
 
-func (l *ipSecConfigurationLoader) loadConfig() (string, error) {
-	buf, err := ioutil.ReadFile(l.FileName)
+func (l *ipSecConfigurationLoader) loadConfig(fileName string) (string, error) {
+	buf, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return "", err
 	}

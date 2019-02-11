@@ -10,7 +10,7 @@ func dummyIpSecConfigLoader() *ipSecConfigurationLoader {
 
 func TestGetConfiguredIpSecConnections_simpleLine(t *testing.T) {
 	input := "conn fancy_dc"
-	connections := dummyIpSecConfigLoader().getConfiguredIpSecConnection(input)
+	connections, _ := dummyIpSecConfigLoader().getConfiguredIpSecConnection(input)
 
 	if len(connections) != 1 {
 		t.Errorf("Expected to have found 1 connection, but has found %d", len(connections))
@@ -24,7 +24,7 @@ func TestGetConfiguredIpSecConnections_simpleLine(t *testing.T) {
 
 func TestGetConfiguredIpSecConnections_connectionIncludingNumber(t *testing.T) {
 	input := "conn fancy_345"
-	connections := dummyIpSecConfigLoader().getConfiguredIpSecConnection(input)
+	connections, _ := dummyIpSecConfigLoader().getConfiguredIpSecConnection(input)
 
 	if len(connections) != 1 {
 		t.Errorf("Expected to have found 1 connection, but has found %d", len(connections))
@@ -38,7 +38,7 @@ func TestGetConfiguredIpSecConnections_connectionIncludingNumber(t *testing.T) {
 
 func TestGetConfiguredIpSecConnections_simpleLineAndComment(t *testing.T) {
 	input := "conn fancy_dc # very wise comment"
-	connections := dummyIpSecConfigLoader().getConfiguredIpSecConnection(input)
+	connections, _ := dummyIpSecConfigLoader().getConfiguredIpSecConnection(input)
 
 	if len(connections) != 1 {
 		t.Errorf("Expected to have found 1 connection, but has found %d", len(connections))
@@ -52,7 +52,7 @@ func TestGetConfiguredIpSecConnections_simpleLineAndComment(t *testing.T) {
 
 func TestGetConfiguredIpSecConnections_withDefault(t *testing.T) {
 	input := "conn %default\n  esp=aes256-sha1\n\nconn fancy_dc"
-	connections := dummyIpSecConfigLoader().getConfiguredIpSecConnection(input)
+	connections, _ := dummyIpSecConfigLoader().getConfiguredIpSecConnection(input)
 
 	if len(connections) != 1 {
 		t.Errorf("Expected to have found 1 connection, but has found %d", len(connections))
@@ -66,7 +66,7 @@ func TestGetConfiguredIpSecConnections_withDefault(t *testing.T) {
 
 func TestGetConfiguredIpSecConnections_withNewLines(t *testing.T) {
 	input := "conn fancy_dc\n  esp=aes256-sha256-modp2048!\n\n  left=10.0.0.7\n\nconn second_dc"
-	connections := dummyIpSecConfigLoader().getConfiguredIpSecConnection(input)
+	connections, _ := dummyIpSecConfigLoader().getConfiguredIpSecConnection(input)
 
 	if len(connections) != 2 {
 		t.Errorf("Expected to have found 2 connection, but has found %d", len(connections))
@@ -84,7 +84,7 @@ func TestGetConfiguredIpSecConnections_withNewLines(t *testing.T) {
 
 func TestGetConfiguredIpSecConnections_autoIgnore(t *testing.T) {
 	input := "conn fancy_dc\n  auto=ignore"
-	connections := dummyIpSecConfigLoader().getConfiguredIpSecConnection(input)
+	connections, _ := dummyIpSecConfigLoader().getConfiguredIpSecConnection(input)
 
 	if len(connections) != 1 {
 		t.Errorf("Expected to have found 1 connection, but has found %d", len(connections))
@@ -102,7 +102,7 @@ func TestGetConfiguredIpSecConnections_autoIgnore(t *testing.T) {
 
 func TestGetConfiguredIpSecConnections_autoIgnoreMultipleTunnels(t *testing.T) {
 	input := "conn fancy_dc\n  esp=aes256-sha256-modp2048!\n\n  left=10.0.0.7\n\nconn second_dc\n  auto=ignore"
-	connections := dummyIpSecConfigLoader().getConfiguredIpSecConnection(input)
+	connections, _ := dummyIpSecConfigLoader().getConfiguredIpSecConnection(input)
 
 	if len(connections) != 2 {
 		t.Errorf("Expected to have found 2 connection, but has found %d", len(connections))
@@ -115,6 +115,26 @@ func TestGetConfiguredIpSecConnections_autoIgnoreMultipleTunnels(t *testing.T) {
 
 	if !connections[1].ignored {
 		t.Errorf("Expected connection '%s' to be ignored", connections[1].name)
+	}
+}
+
+func TestGetConfiguredIpSecConnections_returnsIncludeFileName(t *testing.T) {
+	includePatternString := "/etc/not/default/*.conf"
+	input := "include " + includePatternString
+	connections, includeFiles := dummyIpSecConfigLoader().getConfiguredIpSecConnection(input)
+
+	if len(connections) != 0 {
+		t.Errorf("Expected to have found 0 connection, but has found %d", len(connections))
+		return
+	}
+
+	if len(includeFiles) != 1 {
+		t.Errorf("Expected to have found 1 included file, but has found %d", len(includeFiles))
+		return
+	}
+
+	if includeFiles[0] != includePatternString {
+		t.Errorf("Expected included file to be '%s', but was '%s'", includePatternString, includeFiles[0])
 	}
 }
 
