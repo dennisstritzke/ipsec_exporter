@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	flagIpsecConfigFile  = "collector.ipsec.conf"
+	flagIpsecConfigFile  = "config-path"
 	flagWebListenAddress = "web.listen-address"
 )
 
