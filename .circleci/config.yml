@@ -12,19 +12,14 @@ jobs:
       - run: go get github.com/Masterminds/glide
       - run: glide install
       - run: go test -v $(glide novendor)
-      - save_cache:
-          key: golang-ipsec_exporter-vendor
-          paths:
-            - "vendor"
   build:
     docker:
       - image: circleci/golang:1.10.1
     working_directory: /go/src/github.com/dennisstritzke/ipsec_exporter
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            - golang-ipsec_exporter-vendor
+      - run: go get github.com/Masterminds/glide
+      - run: glide install
       - run:
           name: Build Golang binary
           command: go build -a -installsuffix cgo -o binaries/ipsec_exporter -ldflags "-X github.com/dennisstritzke/ipsec_exporter/cmd.Version=${CIRCLE_TAG}" github.com/dennisstritzke/ipsec_exporter
