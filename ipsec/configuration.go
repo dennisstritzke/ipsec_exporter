@@ -109,5 +109,17 @@ func (l *ipSecConfigurationLoader) loadConfig(fileName string) (string, error) {
 }
 
 func (l *ipSecConfigurationLoader) extractLines(ipsecConfig string) []string {
-	return strings.Split(ipsecConfig, "\n")
+	return l.dropComments(strings.Split(ipsecConfig, "\n"))
+}
+
+func (l *ipSecConfigurationLoader) dropComments(lines []string) []string {
+	var filteredLines []string
+
+	for _, line := range lines {
+		if !strings.HasPrefix(line, "#") {
+			filteredLines = append(filteredLines, line)
+		}
+	}
+
+	return filteredLines
 }

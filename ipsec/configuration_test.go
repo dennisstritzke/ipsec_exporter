@@ -153,6 +153,20 @@ func TestExtractLines(t *testing.T) {
 	checkInput(t, inputSliced, 3, "Third")
 }
 
+func TestIgnoreComments(t *testing.T) {
+	input := "First\n# Second\n\n#Third\nFourth\n# \nFifth"
+	inputSliced := dummyIpSecConfigLoader().extractLines(input)
+
+	if len(inputSliced) != 4 {
+		t.Errorf("Expected output to have 4 items, but has %d", len(inputSliced))
+	}
+
+	checkInput(t, inputSliced, 0, "First")
+	checkInput(t, inputSliced, 1, "")
+	checkInput(t, inputSliced, 2, "Fourth")
+	checkInput(t, inputSliced, 3, "Fifth")
+}
+
 func checkInput(t *testing.T, sliced []string, index int, expected string) {
 	if sliced[index] != expected {
 		t.Errorf("Expected inputSliced[%d] to be %s but was %s", index, expected, sliced[index])
