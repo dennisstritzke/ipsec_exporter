@@ -73,7 +73,7 @@ func (l *ipSecConfigurationLoader) getConfiguredIpSecConnection(ipSecConfigConte
 	ipSecConfigLines := l.extractLines(ipSecConfigContent)
 	for _, line := range ipSecConfigLines {
 		// Match connection definition lines
-		re := regexp.MustCompile(`conn\s([a-zA-Z0-9_-]+)`)
+		re := regexp.MustCompile(`conn\s([.a-zA-Z0-9_-]+)`)
 		match := re.FindStringSubmatch(line)
 		if len(match) >= 2 {
 			connections = append(connections, connection{name: match[1], ignored: false})

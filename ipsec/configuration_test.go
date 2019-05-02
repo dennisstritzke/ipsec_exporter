@@ -22,6 +22,20 @@ func TestGetConfiguredIpSecConnections_simpleLine(t *testing.T) {
 	}
 }
 
+func TestGetConfiguredIpSecConnections_connectionIncludingDots(t *testing.T) {
+	input := "conn fancy.dc"
+	connections, _ := dummyIpSecConfigLoader().getConfiguredIpSecConnection(input)
+
+	if len(connections) != 1 {
+		t.Errorf("Expected to have found 1 connection, but has found %d", len(connections))
+		return
+	}
+
+	if connections[0].name != "fancy.dc" {
+		t.Errorf("Should have found connection 'fancy.dc', but found %s", connections[0].name)
+	}
+}
+
 func TestGetConfiguredIpSecConnections_connectionIncludingNumber(t *testing.T) {
 	input := "conn fancy_345"
 	connections, _ := dummyIpSecConfigLoader().getConfiguredIpSecConnection(input)

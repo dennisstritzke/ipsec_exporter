@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 - The exporter drops comments found in the `ipsec.conf`
 
+### Fixed
+- Previously connection names containing a dot were cut off just before the dot.
+
 ## [0.3](https://github.com/dennisstritzke/ipsec_exporter/releases/tag/v0.3) - 2019-02-12
 ### Added
 - This Changelog.
