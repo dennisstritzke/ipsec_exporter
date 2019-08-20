@@ -26,8 +26,8 @@ func init() {
 		"/etc/ipsec.conf",
 		"Path to the ipsec config file.")
 
-	RootCmd.PersistentFlags().IntVar(&exporter.WebListenAddress, flagWebListenAddress,
-		9536,
+	RootCmd.PersistentFlags().StringVar(&exporter.WebListenAddress, flagWebListenAddress,
+		":9536",
 		"Address on which to expose metrics.")
 }
 
