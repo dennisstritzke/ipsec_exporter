@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
+### Added
+- `--enable.sudo` command line options, which causes the exporter to prefix the `ipsec statusall`-call with `sudo`. (#23)
+
 ### Changed
 - A tunnel is considered up, if the ipsec status output contains `REKEYED` or `REKEYING`.
 

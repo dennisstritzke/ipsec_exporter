@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/dennisstritzke/ipsec_exporter/exporter"
+	"github.com/dennisstritzke/ipsec_exporter/ipsec"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -10,6 +11,7 @@ import (
 const (
 	flagIpsecConfigFile  = "config-path"
 	flagWebListenAddress = "web.listen-address"
+	flagSudo             = "enable.sudo"
 )
 
 var Version string
@@ -29,6 +31,9 @@ func init() {
 	RootCmd.PersistentFlags().StringVar(&exporter.WebListenAddress, flagWebListenAddress,
 		"0.0.0.0:9536",
 		"Address on which to expose metrics.")
+	RootCmd.PersistentFlags().BoolVar(&ipsec.UseSudo, flagSudo,
+		false,
+		"Executing command with sudo.")
 }
 
 func Execute() {
