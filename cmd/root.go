@@ -14,10 +14,10 @@ const (
 
 var Version string
 var RootCmd = &cobra.Command{
-	Use:   "ipsec_exporter",
-	Short: "Prometheus exporter for ipsec status.",
-	Long:  "",
-	Run:   defaultCommand,
+	Use:     "ipsec_exporter",
+	Short:   "Prometheus exporter for ipsec status.",
+	Long:    "",
+	Run:     defaultCommand,
 	Version: Version,
 }
 
@@ -26,8 +26,8 @@ func init() {
 		"/etc/ipsec.conf",
 		"Path to the ipsec config file.")
 
-	RootCmd.PersistentFlags().IntVar(&exporter.WebListenAddress, flagWebListenAddress,
-		9536,
+	RootCmd.PersistentFlags().StringVar(&exporter.WebListenAddress, flagWebListenAddress,
+		"0.0.0.0:9536",
 		"Address on which to expose metrics.")
 }
 

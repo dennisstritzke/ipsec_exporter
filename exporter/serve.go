@@ -6,11 +6,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/log"
 	"net/http"
-	"strconv"
 )
 
 var IpSecConfigFile string
-var WebListenAddress int
+var WebListenAddress string
 
 var ipSecConfiguration *ipsec.Configuration
 
@@ -40,7 +39,7 @@ func Serve() {
 	http.Handle("/metrics", promhttp.Handler())
 
 	log.Infoln("Listening on", WebListenAddress)
-	err = http.ListenAndServe(":"+strconv.Itoa(WebListenAddress), nil)
+	err = http.ListenAndServe(WebListenAddress, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
