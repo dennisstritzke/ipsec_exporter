@@ -1,0 +1,83 @@
+on:
+  push:
+    tags:
+      - "v*"
+
+name: Publish
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Version Info
+        id: version_info
+        run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/v}
+
+      - uses: actions/checkout@v2
+      - run: go build -a -installsuffix cgo -o bin/ipsec_exporter -ldflags "-X github.com/dennisstritzke/ipsec_exporter/cmd.Version=$IPSEC_EXPORTER_VERSION"
+        env:
+          IPSEC_EXPORTER_VERSION: ${{ steps.version_info.outputs.VERSION }}
+          GOOS: linux
+          GOARCH: amd64
+          CGO_ENABLED: 0
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: binaries
+          path: bin/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build arttfacts
+        uses: actions/download-artifact@v2
+        with:
+          name: binaries
+          path: bin/
+
+      - name: Version Info
+        id: version_info
+        run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/v}
+
+      - name: Create release archive
+        id: create_release_archive
+        env:
+          IPSEC_EXPORTER_VERSION: ${{ steps.version_info.outputs.VERSION }}
+        run: |
+          mkdir -p assets/ipsec_exporter-$IPSEC_EXPORTER_VERSION.linux-amd64
+          mv bin/ipsec_exporter assets/ipsec_exporter-$IPSEC_EXPORTER_VERSION.linux-amd64
+
+          tar czvf assets/ipsec_exporter-$IPSEC_EXPORTER_VERSION.linux-amd64.tar.gz -C assets ipsec_exporter-$IPSEC_EXPORTER_VERSION.linux-amd64
+          echo ::set-output name=archive_name::ipsec_exporter-$IPSEC_EXPORTER_VERSION.linux-amd64.tar.gz
+
+          sha256sum assets/*.tar.gz > assets/sha256sums.txt
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          draft: true
+
+      - name: Upload release archive
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: assets/${{ steps.create_release_archive.outputs.archive_name }}
+          asset_name: ${{ steps.create_release_archive.outputs.archive_name }}
+          asset_content_type: application/tar+gzip
+
+      - name: Upload checksums
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: assets/sha256sums.txt
+          asset_name: sha256sums.txt
+          asset_content_type: text/plain

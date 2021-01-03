@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
+### Changed
+- The release archive naming scheme matches those of other exporters like the Node Exporter: the archive contains a
+  directory, which in turn contains the `ipsec_exporter` binary. The archive name drops the `v` prefix of the version.
 
 ## [0.3.1](https://github.com/dennisstritzke/ipsec_exporter/releases/tag/v0.3) - 2019-05-02
 ### Changed

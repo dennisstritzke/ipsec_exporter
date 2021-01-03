@@ -1,4 +1,4 @@
-# IPsec Exporter [![CircleCI](https://circleci.com/gh/dennisstritzke/ipsec_exporter/tree/master.svg?style=svg)](https://circleci.com/gh/dennisstritzke/ipsec_exporter/tree/master)
+# IPsec Exporter ![Test](https://github.com/dennisstritzke/ipsec_exporter/workflows/Test/badge.svg)
 Prometheus exporter for ipsec metrics, written in Go.
 
 ## Quick Start
