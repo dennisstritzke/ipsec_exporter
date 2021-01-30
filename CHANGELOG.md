@@ -4,13 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
+
+## [0.3.2](https://github.com/dennisstritzke/ipsec_exporter/releases/tag/v0.3.2) - 2021-01-30
 ### Changed
 - The release archive naming scheme matches those of other exporters like the Node Exporter: the archive contains a
   directory, which in turn contains the `ipsec_exporter` binary. The archive name drops the `v` prefix of the version.
 - The `--web.listen-address` accepts a string instead of an int, which enables you to listen on specific interfaces. To
   preserve the previous behaviour the default is set to `0.0.0.0:9536`.
 
-## [0.3.1](https://github.com/dennisstritzke/ipsec_exporter/releases/tag/v0.3) - 2019-05-02
+## [0.3.1](https://github.com/dennisstritzke/ipsec_exporter/releases/tag/v0.3.1) - 2019-05-02
 ### Changed
 - The exporter drops comments found in the `ipsec.conf`
 
