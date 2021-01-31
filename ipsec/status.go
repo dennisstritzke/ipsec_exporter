@@ -5,15 +5,25 @@ import (
 	"os/exec"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
-type status struct {
-	up         bool
-	status     connectionStatus
+type counterStruct struct {
 	bytesIn    int
 	bytesOut   int
 	packetsIn  int
 	packetsOut int
+}
+
+type status struct {
+	up     bool
+	status connectionStatus
+	//counterStruct
+	bytesIn     int
+	bytesOut    int
+	packetsIn   int
+	packetsOut  int
+	spiCounters map[string]counterStruct
 }
 
 type connectionStatus int
@@ -64,12 +74,13 @@ func queryStatus(ipSecConfiguration *Configuration, provider statusProvider) map
 			}
 		} else {
 			statusMap[connection.name] = &status{
-				up:         true,
-				status:     extractStatus([]byte(out)),
-				bytesIn:    extractIntWithRegex(out, `([[0-9]+) bytes_i`),
-				bytesOut:   extractIntWithRegex(out, `([[0-9]+) bytes_o`),
-				packetsIn:  extractIntWithRegex(out, `bytes_i \(([[0-9]+) pkts`),
-				packetsOut: extractIntWithRegex(out, `bytes_o \(([[0-9]+) pkts`),
+				up:          true,
+				status:      extractStatus([]byte(out)),
+				bytesIn:     extractIntWithRegex(out, `([[0-9]+) bytes_i`),
+				bytesOut:    extractIntWithRegex(out, `([[0-9]+) bytes_o`),
+				packetsIn:   extractIntWithRegex(out, `bytes_i \(([[0-9]+) pkts`),
+				packetsOut:  extractIntWithRegex(out, `bytes_o \(([[0-9]+) pkts`),
+				spiCounters: extractPairCounters(out),
 			}
 		}
 	}
@@ -93,6 +104,56 @@ func extractStatus(statusLine []byte) connectionStatus {
 	}
 
 	return unknown
+}
+
+func extractPairCounters(input string) map[string]counterStruct {
+	var tunnelMark = regexp.MustCompile("TUNNEL.*SPIs")
+	var spiPairMark = regexp.MustCompile(`(?P<pair>([0-9]+\.){3}[0-9]+(\/[0-9]+)? === ([0-9]+\.){3}[0-9]+(\/[0-9]+)?)`)
+	var expectCounters bool = false
+	var expectPair bool = false
+	//var expectTunnel bool = true
+	var bi int
+	var bo int
+	var pi int
+	var po int
+	var pair string
+	var counters map[string]counterStruct = make(map[string]counterStruct)
+	byLine := strings.Split(input, "\n")
+	for _, a := range byLine {
+		if len(tunnelMark.FindStringSubmatch(a)) > 0 {
+			expectCounters = true
+			continue
+		}
+		if expectCounters {
+			bi = extractIntWithRegex(a, `([[0-9]+) bytes_i`)
+			bo = extractIntWithRegex(a, `([[0-9]+) bytes_o`)
+			pi = extractIntWithRegex(a, `bytes_i \(([[0-9]+) pkts`)
+			po = extractIntWithRegex(a, `bytes_o \(([[0-9]+) pkts`)
+			expectCounters = false
+			expectPair = true
+			continue
+		}
+		if expectPair && len(spiPairMark.FindStringSubmatch(a)) > 0 {
+			m := spiPairMark.FindStringSubmatch(a)
+			for i, n := range spiPairMark.SubexpNames() {
+				if n == "pair" {
+					pair = m[i]
+					s := counterStruct{bytesIn: bi,
+						bytesOut:   bo,
+						packetsIn:  pi,
+						packetsOut: po}
+					counters[pair] = s
+				}
+			}
+			bi = 0
+			bo = 0
+			pi = 0
+			po = 0
+			expectPair = false
+			//expectTunnel = true
+		}
+	}
+	return counters
 }
 
 func extractIntWithRegex(input string, regex string) int {

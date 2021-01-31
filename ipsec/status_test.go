@@ -21,7 +21,7 @@ func TestQueryStatus(t *testing.T) {
 	tunnelName := "foo"
 	configuration := &Configuration{
 		tunnel: []connection{
-			{name: tunnelName, ignored: false,},
+			{name: tunnelName, ignored: false},
 		},
 	}
 
@@ -45,8 +45,10 @@ Security Associations (1 up, 0 connecting):
         foo{83}:  INSTALLED, TUNNEL, reqid 21, ESP in UDP SPIs: c96e6b17_i 34f71a54_o
         foo{83}:  AES_CBC_256/HMAC_SHA2_256_128, 2646320 bytes_i (37510 pkts, 0s ago), 3014849 bytes_o (54623 pkts, 0s ago), rekeying in 21 hours
         foo{83}:   172.19.10.0/24 === 172.19.5.0/24
+        foo{83}:  INSTALLED, TUNNEL, reqid 21, ESP in UDP SPIs: c96e6b27_i 34f72a54_o
+        foo{83}:  AES_CBC_256/HMAC_SHA2_256_128, 264 bytes_i (37 pkts, 0s ago), 301 bytes_o (54 pkts, 0s ago), rekeying in 1 hours
+        foo{83}:   172.19.12.0/24 === 172.19.6.0/24
 `})
-
 	if status[tunnelName] == nil {
 		t.Errorf("Expected a status for the tunnel named '%s'.", tunnelName)
 		return
@@ -84,13 +86,50 @@ Security Associations (1 up, 0 connecting):
 	if actualPacketsOut != expectedPacketsOut {
 		t.Errorf("Expected '%d' received bytes, but was '%d'", expectedPacketsOut, actualPacketsOut)
 	}
+	expectedSPICount := 2
+	actualSPICount := len(status[tunnelName].spiCounters)
+	if actualSPICount != expectedSPICount {
+		t.Errorf("Expected '%d' SPI count, but was '%d'", expectedSPICount, actualSPICount)
+	}
+	/* expected status */
+	expectedStatusBySPI := map[string]counterStruct{
+		"172.19.10.0/24 === 172.19.5.0/24": counterStruct{
+			bytesIn:    2646320,
+			bytesOut:   3014849,
+			packetsIn:  37510,
+			packetsOut: 54623,
+		},
+		"172.19.12.0/24 === 172.19.6.0/24": counterStruct{
+			bytesIn:    264,
+			bytesOut:   301,
+			packetsIn:  37,
+			packetsOut: 54,
+		},
+	}
+	for spi, _ := range expectedStatusBySPI {
+		if _, ok := status[tunnelName].spiCounters[spi]; !ok {
+			t.Errorf("Expected %s to be in status", spi)
+		}
+		if expectedStatusBySPI[spi].bytesIn != status[tunnelName].spiCounters[spi].bytesIn {
+			t.Errorf("Expected [%s].bytesIn: %d ; got: %d", spi, expectedStatusBySPI[spi].bytesIn, status[tunnelName].spiCounters[spi].bytesIn)
+		}
+		if expectedStatusBySPI[spi].bytesOut != status[tunnelName].spiCounters[spi].bytesOut {
+			t.Errorf("Expected [%s].bytesOut: %d ; got: %d", spi, expectedStatusBySPI[spi].bytesOut, status[tunnelName].spiCounters[spi].bytesOut)
+		}
+		if expectedStatusBySPI[spi].packetsIn != status[tunnelName].spiCounters[spi].packetsIn {
+			t.Errorf("Expected [%s].packetsIn: %d ; got: %d", spi, expectedStatusBySPI[spi].packetsIn, status[tunnelName].spiCounters[spi].packetsIn)
+		}
+		if expectedStatusBySPI[spi].packetsOut != status[tunnelName].spiCounters[spi].packetsOut {
+			t.Errorf("Expected [%s].packetsOut: %d ; got: %d", spi, expectedStatusBySPI[spi].packetsOut, status[tunnelName].spiCounters[spi].packetsOut)
+		}
+	}
 }
 
 func TestQueryStatus_ignoredTunnel(t *testing.T) {
 	tunnelName := "foo"
 	configuration := &Configuration{
 		tunnel: []connection{
-			{name: tunnelName, ignored: true,},
+			{name: tunnelName, ignored: true},
 		},
 	}
 
@@ -115,7 +154,7 @@ func TestQueryStatus_errorInProvider(t *testing.T) {
 	tunnelName := "foo"
 	configuration := &Configuration{
 		tunnel: []connection{
-			{name: tunnelName, ignored: false,},
+			{name: tunnelName, ignored: false},
 		},
 	}
 
