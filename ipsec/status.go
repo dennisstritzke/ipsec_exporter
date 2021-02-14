@@ -94,10 +94,7 @@ func extractTunnelInstances(statusLine string, conn connection) map[string]struc
 	}
 
 	if len(instances) == 0 {
-		regex = regexp.MustCompile(`\[[0-9]+]`)
-		if regex.Match([]byte(statusLine)) {
-			instances[pseudoTunnelID] = struct{}{}
-		}
+		instances[pseudoTunnelID] = struct{}{}
 	}
 
 	return instances
