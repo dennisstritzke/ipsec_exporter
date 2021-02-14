@@ -5,15 +5,17 @@ import (
 )
 
 var (
-	metricUp = prometheus.NewDesc("ipsec_up", "value indicating a successful scrape", []string{"tunnel"}, nil)
-	metricStatus = prometheus.NewDesc("ipsec_status", "ipsec status value", []string{"tunnel"}, nil)
-	metricBytesIn = prometheus.NewDesc("ipsec_in_bytes", "received bytes per tunnel", []string{"tunnel"}, nil)
-	metricBytesOut = prometheus.NewDesc("ipsec_out_bytes", "sent bytes per tunnel", []string{"tunnel"}, nil)
-	metricPacketsIn = prometheus.NewDesc("ipsec_in_packets", "received packets per tunnel", []string{"tunnel"}, nil)
-	metricPacketsOut = prometheus.NewDesc("ipsec_out_packets", "sent packets per tunnel", []string{"tunnel"}, nil)
+	variableLabels = []string{"tunnel", "tunnel_instance"}
+
+	metricUp         = prometheus.NewDesc("ipsec_up", "value indicating a successful scrape", variableLabels, nil)
+	metricStatus     = prometheus.NewDesc("ipsec_status", "ipsec status value", variableLabels, nil)
+	metricBytesIn    = prometheus.NewDesc("ipsec_in_bytes", "received bytes per tunnel", variableLabels, nil)
+	metricBytesOut   = prometheus.NewDesc("ipsec_out_bytes", "sent bytes per tunnel", variableLabels, nil)
+	metricPacketsIn  = prometheus.NewDesc("ipsec_in_packets", "received packets per tunnel", variableLabels, nil)
+	metricPacketsOut = prometheus.NewDesc("ipsec_out_packets", "sent packets per tunnel", variableLabels, nil)
 )
 
-func NewCollector(configurations ... *Configuration) *Collector {
+func NewCollector(configurations ...*Configuration) *Collector {
 	return &Collector{
 		configurations: configurations,
 	}
@@ -34,15 +36,17 @@ func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	for _, configuration := range c.configurations {
-		status := queryStatus(configuration, &cliStatusProvider{})
+		tunnelStatuses := queryStatus(configuration, &cliStatusProvider{})
 
-		for tunnel, tunnelStatus := range status {
-			ch <- prometheus.MustNewConstMetric(metricUp, prometheus.GaugeValue, c.toFloat64(tunnelStatus.up), tunnel)
-			ch <- prometheus.MustNewConstMetric(metricStatus, prometheus.GaugeValue, float64(tunnelStatus.status), tunnel)
-			ch <- prometheus.MustNewConstMetric(metricBytesIn, prometheus.CounterValue, float64(tunnelStatus.bytesIn), tunnel)
-			ch <- prometheus.MustNewConstMetric(metricBytesOut, prometheus.CounterValue, float64(tunnelStatus.bytesOut), tunnel)
-			ch <- prometheus.MustNewConstMetric(metricPacketsIn, prometheus.CounterValue, float64(tunnelStatus.packetsIn), tunnel)
-			ch <- prometheus.MustNewConstMetric(metricPacketsOut, prometheus.CounterValue, float64(tunnelStatus.packetsOut), tunnel)
+		for tunnel, tunnelInstanceStatuses := range tunnelStatuses {
+			for tunnelInstance, tunnelStatus := range tunnelInstanceStatuses {
+				ch <- prometheus.MustNewConstMetric(metricUp, prometheus.GaugeValue, c.toFloat64(tunnelStatus.up), tunnel, tunnelInstance)
+				ch <- prometheus.MustNewConstMetric(metricStatus, prometheus.GaugeValue, float64(tunnelStatus.status), tunnel, tunnelInstance)
+				ch <- prometheus.MustNewConstMetric(metricBytesIn, prometheus.CounterValue, float64(tunnelStatus.bytesIn), tunnel, tunnelInstance)
+				ch <- prometheus.MustNewConstMetric(metricBytesOut, prometheus.CounterValue, float64(tunnelStatus.bytesOut), tunnel, tunnelInstance)
+				ch <- prometheus.MustNewConstMetric(metricPacketsIn, prometheus.CounterValue, float64(tunnelStatus.packetsIn), tunnel, tunnelInstance)
+				ch <- prometheus.MustNewConstMetric(metricPacketsOut, prometheus.CounterValue, float64(tunnelStatus.packetsOut), tunnel, tunnelInstance)
+			}
 		}
 	}
 }
