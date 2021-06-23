@@ -31,7 +31,7 @@ func init() {
 	RootCmd.PersistentFlags().IntVar(&exporter.WebListenAddress, flagWebListenAddress,
 		9536,
 		"Address on which to expose metrics.")
-	RootCmd.PersistentFlags().BoolVar(&exporter.Sudo, flagSudo,
+	RootCmd.PersistentFlags().BoolVar(&ipsec.Sudo, flagSudo,
 		false,
 		"Executing command with sudo.")
 }
