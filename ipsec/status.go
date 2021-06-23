@@ -7,6 +7,8 @@ import (
 	"strconv"
 )
 
+var Sudo bool
+
 type status struct {
 	up         bool
 	status     connectionStatus
@@ -34,7 +36,19 @@ type cliStatusProvider struct {
 }
 
 func (c *cliStatusProvider) statusOutput(tunnel connection) (string, error) {
-	cmd := exec.Command("ipsec", "statusall", tunnel.name)
+        var args [3]string
+
+        if Sudo == true {
+                args[0] = "/bin/sh"
+                args[1] = "-c"
+                args[2] = "sudo ipsec statusall " + tunnel.name
+        } else {
+                args[0] = "ipsec"
+                args[1] = "statusall"
+                args[2] = tunnel.name
+        }
+
+        cmd := exec.Command(args[0], args[1], args[2])
 	out, err := cmd.Output()
 
 	if err != nil {
