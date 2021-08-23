@@ -79,7 +79,7 @@ func queryStatus(ipSecConfiguration *Configuration, provider statusProvider) map
 
 func extractStatus(statusLine []byte) connectionStatus {
 	noMatchRegex := regexp.MustCompile(`no match`)
-	tunnelEstablishedRegex := regexp.MustCompile(`{[0-9]+}: *(INSTALLED|REKEYED)`)
+	tunnelEstablishedRegex := regexp.MustCompile(`{[0-9]+}: *INSTALLED`)
 	connectionEstablishedRegex := regexp.MustCompile(`[[0-9]+]: *ESTABLISHED`)
 
 	if connectionEstablishedRegex.Match(statusLine) {
