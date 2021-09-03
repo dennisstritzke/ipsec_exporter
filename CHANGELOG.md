@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
+### Changed
+- A tunnel is considered up, if the ipsec status output contains `REKEYED` or `REKEYING`.
 
 ## [0.3.2](https://github.com/dennisstritzke/ipsec_exporter/releases/tag/v0.3.2) - 2021-01-30
 ### Changed
