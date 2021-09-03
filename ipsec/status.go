@@ -7,6 +7,8 @@ import (
 	"strconv"
 )
 
+var UseSudo bool
+
 type status struct {
 	up         bool
 	status     connectionStatus
@@ -35,6 +37,10 @@ type cliStatusProvider struct {
 
 func (c *cliStatusProvider) statusOutput(tunnel connection) (string, error) {
 	cmd := exec.Command("ipsec", "statusall", tunnel.name)
+	if UseSudo {
+		cmd = exec.Command("sudo", "ipsec", "statusall", tunnel.name)
+	}
+
 	out, err := cmd.Output()
 
 	if err != nil {
