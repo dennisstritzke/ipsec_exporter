@@ -1,11 +1,14 @@
 package exporter
 
 import (
+	"net/http"
+	"os"
+
 	"github.com/dennisstritzke/ipsec_exporter/ipsec"
+	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/common/log"
-	"net/http"
+	"github.com/prometheus/common/promlog"
 )
 
 var IpSecConfigFile string
@@ -13,15 +16,18 @@ var WebListenAddress string
 
 var ipSecConfiguration *ipsec.Configuration
 
+var logger = promlog.New(&promlog.Config{})
+
 func Serve() {
 	var err error
 	ipSecConfiguration, err = ipsec.NewConfiguration(IpSecConfigFile)
 	if err != nil {
-		log.Fatal(err)
+		level.Error(logger).Log("err", err)
+		os.Exit(1)
 		return
 	}
 	if !ipSecConfiguration.HasTunnels() {
-		log.Warn("Found no configured connections in " + IpSecConfigFile)
+		level.Warn(logger).Log("msg", "Found no configured connections in "+IpSecConfigFile)
 	}
 
 	collector := ipsec.NewCollector(ipSecConfiguration)
@@ -38,9 +44,10 @@ func Serve() {
 	})
 	http.Handle("/metrics", promhttp.Handler())
 
-	log.Infoln("Listening on", WebListenAddress)
+	level.Info(logger).Log("msg", "Listening on: "+WebListenAddress)
 	err = http.ListenAndServe(WebListenAddress, nil)
 	if err != nil {
-		log.Fatal(err)
+		level.Error(logger).Log("err", err)
+		os.Exit(1)
 	}
 }

@@ -1,13 +1,16 @@
 package ipsec
 
 import (
-	"github.com/prometheus/common/log"
 	"os/exec"
 	"regexp"
 	"strconv"
+
+	"github.com/go-kit/log/level"
+	"github.com/prometheus/common/promlog"
 )
 
 var UseSudo bool
+var logger = promlog.New(&promlog.Config{})
 
 type status struct {
 	up         bool
@@ -63,7 +66,7 @@ func queryStatus(ipSecConfiguration *Configuration, provider statusProvider) map
 		}
 
 		if out, err := provider.statusOutput(connection); err != nil {
-			log.Warnf("Unable to retrieve the status of tunnel '%s'. Reason: %v", connection.name, err)
+			level.Warn(logger).Log("msg", "Unable to retrieve the status.", "tunnel", connection.name, "err", err)
 			statusMap[connection.name] = &status{
 				up:     false,
 				status: unknown,
