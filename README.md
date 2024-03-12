@@ -1,6 +1,11 @@
 # IPsec Exporter ![Test](https://github.com/dennisstritzke/ipsec_exporter/workflows/Test/badge.svg)
 Prometheus exporter for ipsec metrics, written in Go.
 
+## Deprecation
+PROJECT DEPRECATED: This project is no longer maintained and patched for security updates. Repository will be archived soon.
+
+Use https://github.com/torilabs/ipsec-prometheus-exporter instead.
+
 ## Functionality
 The IPsec exporter is determining the state of the configured IPsec tunnels via the following procedure.
 1. Starting up the `ipsec.conf` is read. All tunnels configured via the `conn` keyword are observed.
